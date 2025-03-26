@@ -3,12 +3,15 @@ import numpy as np
 import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
 import pyroomacoustics as pra
 from scipy.io import wavfile
 import os
 from acoustic_utils import octave_band_filter, reverb_time_T30
 
-matplotlib.rcParams['font.family'] = 'Meiryo'
+font_path = "fonts/static/NotoSansJP-Light.ttf"
+font_prop = fm.FontProperties(fname=font_path)
+
 st.set_page_config(page_title="音響シミュレーションアプリ", layout="wide")
 st.title("🔊 音響シミュレーションアプリ")
 
@@ -62,8 +65,8 @@ ax.plot(mic_x, mic_y, 'ks', label='マイク')
 ax.set_xlim(-1, room_width + 1)
 ax.set_ylim(-1, room_depth + 1)
 ax.set_aspect('equal')
-ax.set_title("部屋の平面図（上から見た図）", fontsize=12)
-ax.legend(loc='center left', bbox_to_anchor=(1.02, 0.5))
+ax.set_title("部屋の平面図（上から見た図）", fontproperties=font_prop, fontsize=12)
+ax.legend(loc='center left', bbox_to_anchor=(1.02, 0.5), prop=font_prop)
 st.pyplot(fig)
 
 # --- 音源ファイルの読み込み ---
@@ -122,9 +125,9 @@ if st.button("▶ シミュレーション実行"):
     rir = room.rir[0][0]
     fig, ax = plt.subplots()
     ax.plot(np.arange(len(rir)) / fs, rir)
-    ax.set_xlabel("Time [s]")
-    ax.set_ylabel("Amplitude")
-    ax.set_title("インパルス応答")
+    ax.set_xlabel("Time [s]",fontproperties=font_prop)
+    ax.set_ylabel("Amplitude",fontproperties=font_prop)
+    ax.set_title("インパルス応答",fontproperties=font_prop)
     st.pyplot(fig)
     st.audio(rir / np.max(np.abs(rir)), sample_rate=fs)
 
