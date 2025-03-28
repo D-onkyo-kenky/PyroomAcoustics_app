@@ -24,3 +24,21 @@ def reverb_time_T30(y, fs):
     z = np.polyfit(t[fit_start:fit_end], sc[fit_start:fit_end], 1)
     T30 = -60 / z[0]
     return T30
+
+def cut_signal_by_threshold(signal: np.ndarray, threshold_db: float) -> np.ndarray:
+    """
+    振幅しきい値で信号末尾をカットする関数（dB単位指定）。
+
+    Parameters:
+    - signal: 正規化済みの信号
+    - threshold_db: カットする振幅のdB（例：-60）
+
+    Returns:
+    - カット後の信号（末尾）
+    """
+    threshold = 10 ** (threshold_db / 20)
+    valid_indices = np.where(np.abs(signal) > threshold)[0]
+    if len(valid_indices) > 0:
+        return signal[:valid_indices[-1] + 1]
+    else:
+        return signal

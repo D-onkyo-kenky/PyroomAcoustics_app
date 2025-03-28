@@ -7,7 +7,7 @@ import matplotlib.font_manager as fm
 import pyroomacoustics as pra
 from scipy.io import wavfile
 import os
-from acoustic_utils import octave_band_filter, reverb_time_T30
+from acoustic_utils import octave_band_filter, reverb_time_T30, cut_signal_by_threshold
 
 font_path = "fonts/static/NotoSansJP-Light.ttf"
 font_prop = fm.FontProperties(fname=font_path)
@@ -82,7 +82,7 @@ elif os.path.exists("source.wav"):
     if audio.ndim > 1:
         audio = np.mean(audio, axis=1)
     audio = audio.astype(np.float32) / np.max(np.abs(audio))
-    st.sidebar.info("source.wav を使用中")
+    st.sidebar.info("デフォルトの音源を使用中")
 else:
     st.sidebar.error("音源が見つかりません")
     st.stop()
@@ -102,7 +102,15 @@ if st.button("▶ シミュレーション実行"):
         room_dim,
         fs=fs,
         materials={face: material_dict[walls[face]] for face in walls},
-        max_order=17
+        max_order=3,
+        air_absorption=True
+    )
+
+    # 音線法の設定
+    room.set_ray_tracing(
+    receiver_radius=0.5,   # 受音半径[m]（一般的には0.1〜0.5）
+    n_rays=10000,          # 発射する音線の数（精度と速度のトレードオフ）
+    energy_thres=1e-5      # エネルギーのしきい値（これ以下の音線は無視）
     )
 
     room.add_source([src_x, src_y, src_z], signal=audio)
@@ -116,20 +124,26 @@ if st.button("▶ シミュレーション実行"):
 
     st.subheader("🎧 シミュレーション音源")
     signal = room.mic_array.signals[0]
-    signal = signal / np.max(np.abs(signal))
+    signal = signal / (np.max(np.abs(signal)) + 1e-12) #正規化
+    signal = cut_signal_by_threshold(signal, -30) #閾値で音源の長さを調整
     st.audio(signal, sample_rate=fs)
+
     # wavfile.write("mic0.wav", fs, (signal * 32767).astype(np.int16))
     # st.success("mic0.wav を保存しました")
 
     st.subheader("📈 インパルス応答波形")
+    # インパルス応答の取得と正規化
     rir = room.rir[0][0]
+    rir = rir / (np.max(np.abs(rir)) + 1e-12) #正規化
+    rir = cut_signal_by_threshold(rir, -80) #閾値で音源の長さを調整
+    
     fig, ax = plt.subplots()
     ax.plot(np.arange(len(rir)) / fs, rir)
     ax.set_xlabel("Time [s]",fontproperties=font_prop)
     ax.set_ylabel("Amplitude",fontproperties=font_prop)
     ax.set_title("インパルス応答",fontproperties=font_prop)
     st.pyplot(fig)
-    st.audio(rir / np.max(np.abs(rir)), sample_rate=fs)
+    st.audio(rir, sample_rate=fs)
 
     # 残響時間（T30）
     st.subheader("⏱ 残響時間解析 (1/1 Oct)")
