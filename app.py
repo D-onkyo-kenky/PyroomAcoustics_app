@@ -55,10 +55,10 @@ for i, wall in enumerate(wall_colors):
 dpi = 100
 fig = plt.figure(figsize=(300 / dpi, 300 / dpi), dpi=dpi)
 ax = fig.add_subplot(111)
-ax.plot([0, room_width], [0, 0], color='green', linewidth=3, label='south')
-ax.plot([0, room_width], [room_depth, room_depth], color='orange', linewidth=3, label='north')
 ax.plot([0, 0], [0, room_depth], color='red', linewidth=3, label='west')
 ax.plot([room_width, room_width], [0, room_depth], color='blue', linewidth=3, label='east')
+ax.plot([0, room_width], [0, 0], color='green', linewidth=3, label='south')
+ax.plot([0, room_width], [room_depth, room_depth], color='orange', linewidth=3, label='north')
 ax.plot(src_x, src_y, '^', label='音源')
 ax.plot(mic_x, mic_y, '*', label='マイク')
 ax.set_xlim(-1, room_width + 1)
@@ -124,7 +124,7 @@ if st.button("▶ シミュレーション実行"):
     st.subheader("🎧 シミュレーション音源")
     signal = room.mic_array.signals[0]
     signal = signal / (np.max(np.abs(signal)) + 1e-12) # 正規化
-    signal = cut_signal_by_threshold(signal, -40) # 閾値で音源の長さを調整
+    signal = cut_signal_by_threshold(signal, -80) # 閾値で音源の長さを調整
     st.audio(signal, sample_rate=fs)
     # wavfile.write("mic0.wav", fs, (signal * 32767).astype(np.int16))
     # st.success("mic0.wav を保存しました")
