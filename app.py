@@ -123,7 +123,7 @@ if st.button("▶ シミュレーション実行"):
 
     st.subheader("🎧 シミュレーション音源")
     signal = room.mic_array.signals[0]
-    signal = signal / (np.max(np.abs(signal)) + 1e-12) # 正規化
+    #signal = signal / (np.max(np.abs(signal)) + 1e-12) # 正規化
     signal = cut_signal_by_threshold(signal, -80) # 閾値で音源の長さを調整
     st.audio(signal, sample_rate=fs)
     # wavfile.write("mic0.wav", fs, (signal * 32767).astype(np.int16))
@@ -131,20 +131,20 @@ if st.button("▶ シミュレーション実行"):
 
     # インパルス応答の取得と正規化
     rir = room.rir[0][0]
-    rir = rir / (np.max(np.abs(rir)) + 1e-12) # 正規化
+    rir_norm = rir / (np.max(np.abs(rir)) + 1e-12) # 正規化
 
     # 残響時間（T30）
     st.subheader("⏱ 残響時間 (1/1 Oct)")
-    cfreqs = [63, 125, 250, 500, 1000, 2000, 4000, 8000]
+    cfreqs = [63, 125, 250, 500, 1000, 2000, 4000]
     T30_values = []
     for fc in cfreqs:
-        y = octave_band_filter(rir, fs, fc)
+        y = octave_band_filter(rir_norm, fs, fc)
         T30 = reverb_time_T30(y, fs)
         T30_values.append(round(T30, 1)) # 小数点第一
     df = pd.DataFrame({'中心周波数 (Hz)': cfreqs, 'T30 (s)': T30_values})
     st.dataframe(df, width=300, hide_index=True)
 
-    # インパルス応答のグラフと再生
+    # インパルス応答のグラフと再生（正規化しない）
     with st.expander("📈 インパルス応答（クリックで展開）"):
         rir = cut_signal_by_threshold(rir, -80)  # 閾値で音源の長さを調整
         fig, ax = plt.subplots(figsize=(8, 3))
