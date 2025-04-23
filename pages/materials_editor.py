@@ -27,7 +27,7 @@ else:
     materials_df = default_materials()
 
 # 表形式で編集
-st.subheader("吸音率表の編集")
+st.subheader("吸音材料の編集")
 edited_df = st.data_editor(materials_df, num_rows="dynamic", use_container_width=True)
 
 # 保存ボタン
