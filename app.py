@@ -150,9 +150,16 @@ if st.button("▶ シミュレーション実行"):
 
     # インパルス応答の畳み込み
     st.subheader("🎧 シミュレーション音源")
-    col1, col2 = st.columns(2)
-    with col1:
-        st.caption("実際の距離・吸音の影響をそのまま反映した音")
+    signal_norm = signal / (np.max(np.abs(signal)) + 1e-12)
+    signal_int16_norm = (signal_norm * 32767).astype(np.int16)
+    wav_bytes_norm = io.BytesIO()
+    write(wav_bytes_norm, fs, signal_int16_norm)
+    wav_bytes_norm.seek(0)
+    st.audio(wav_bytes_norm, format="audio/wav")
+
+    # こちらは折りたたみ表示にする「実際の距離・吸音の影響をそのまま反映した音」
+    with st.expander("🎧 距離感を反映した音（クリックで展開）"):
+        st.caption("距離感を反映した音")
         signal_clipped = np.clip(signal, -1.0, 1.0)
         signal_int16 = (signal_clipped * 32767).astype(np.int16)
         wav_bytes = io.BytesIO()
@@ -160,21 +167,13 @@ if st.button("▶ シミュレーション実行"):
         wav_bytes.seek(0)
         st.audio(wav_bytes, format="audio/wav")
 
-    with col2:
-        st.caption("音量を聞きやすく自動調整した音")
-        signal_norm = signal / (np.max(np.abs(signal)) + 1e-12)
-        signal_int16_norm = (signal_norm * 32767).astype(np.int16)
-        wav_bytes_norm = io.BytesIO()
-        write(wav_bytes_norm, fs, signal_int16_norm)
-        wav_bytes_norm.seek(0)
-        st.audio(wav_bytes_norm, format="audio/wav")
 
     # インパルス応答の取得と正規化
     rir = room.rir[0][0]
     rir_norm = rir / (np.max(np.abs(rir)) + 1e-12) # 正規化
 
     # 残響時間（T30）
-    st.subheader("⏱ 残響時間 (1/1 Oct)")
+    st.subheader("⏱ 残響時間")
     cfreqs = [63, 125, 250, 500, 1000, 2000, 4000]
     T30_values = []
     for fc in cfreqs:
