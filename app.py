@@ -66,18 +66,80 @@ radius = st.sidebar.number_input("受音半径[m]", 0.1, 1.0, 0.5)
 energy_threshold = st.sidebar.number_input("エネルギー閾値", min_value=1e-7, max_value=1e-1, value=1e-5, step=1e-7, format="%.2e")
 image_numbers= st.sidebar.number_input("虚像法の反射回数", 0, 100, 3)
 
+
 # --- 各面の材料選択 ---
-st.subheader("材料指定")
+st.subheader("材料指定（各面）")
+
+# 材料名リスト
 material_names = materials_df['material'].tolist()
 wall_colors = {
     'west': 'red', 'east': 'blue', 'south': 'green',
     'north': 'orange', 'floor': 'gray', 'ceiling': 'purple'
 }
-walls = {}
+
+# プリセット定義
+presets = {
+    "ブラインド吸音なし": {
+        'west': 'low abs board',
+        'east': 'glass',
+        'south': 'glass',
+        'north': 'low abs board',
+        'floor': 'low abs board',
+        'ceiling': 'low abs board'
+    },
+    "ブラインド吸音あり": {
+        'west': 'low abs board',
+        'east': '★abs_blind',
+        'south': '★abs_blind',
+        'north': 'low abs board',
+        'floor': 'low abs board',
+        'ceiling': 'low abs board'
+    },
+    "コンクリート": {
+        'west': 'concrete',
+        'east': 'concrete',
+        'south': 'concrete',
+        'north': 'concrete',
+        'floor': 'concrete',
+        'ceiling': 'concrete'
+    }    
+}
+
+# UIで選ぶプリセット名
+selected_preset_name = st.selectbox("🎛 プリセットを選択", list(presets.keys()))
+
+# プリセット適用フラグ
+if "apply_preset" not in st.session_state:
+    st.session_state.apply_preset = False
+
+# 適用ボタン
+if st.button("📋 プリセットを適用"):
+    st.session_state.apply_preset = True
+    st.session_state.preset_values = presets[selected_preset_name]
+
+# セレクタ生成
 cols = st.columns(6)
+walls = {}
+
 for i, wall in enumerate(wall_colors):
     with cols[i]:
-        walls[wall] = st.selectbox(f"{wall} ({wall_colors[wall]})", material_names, key=wall)
+        # プリセット適用時
+        if st.session_state.apply_preset:
+            default_material = st.session_state.preset_values[wall]
+        else:
+            default_material = st.session_state.get(f"{wall}_material", material_names[0])
+
+        selected = st.selectbox(
+            f"{wall}（{wall_colors[wall]}）",
+            material_names,
+            index=material_names.index(default_material),
+            key=f"{wall}_material"
+        )
+        walls[wall] = selected
+
+# 一度適用したら次回以降は適用フラグをオフにする
+st.session_state.apply_preset = False
+
 
 # --- 平面図描画 ---
 dpi = 100
